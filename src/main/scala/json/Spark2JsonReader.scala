@@ -17,7 +17,7 @@ object Spark2JsonReader {
 
 
     // reading a json
-    val df = spark.read.option("multiline",true).json("/home/hduser/IdeaProjects/spark2demo/src/resources/sample.json")
+    val df = spark.read.option("multiline",true).json("src/resources/sample.json")
 
     df.printSchema()
 

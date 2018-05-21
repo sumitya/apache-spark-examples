@@ -18,7 +18,7 @@ object Spark1JsonReader {
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)
 
 
-    val file = sqlContext.read.json(sc.wholeTextFiles("/home/hduser/IdeaProjects/spark2demo/src/resources/sample.json").values)
+    val file = sqlContext.read.json(sc.wholeTextFiles("src/resources/sample.json").values)
 
     file.take(5).foreach(println)
 
