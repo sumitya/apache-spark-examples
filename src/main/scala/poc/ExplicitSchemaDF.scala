@@ -1,9 +1,10 @@
 package poc
 
+import org.apache.spark.sql.SparkSession
+
 object ExplicitSchemaDF {
 
   def main(args: Array[String]): Unit = {
-
 
     val spark = SparkSession
       .builder()
@@ -25,6 +26,5 @@ object ExplicitSchemaDF {
 
     df2.printSchema()
   }
-
 
 }

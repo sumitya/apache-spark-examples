@@ -1,5 +1,7 @@
 package poc
 
+import org.apache.spark.sql.SparkSession
+
 object SparkHiveSql{
 
   def main(args: Array[String]): Unit = {

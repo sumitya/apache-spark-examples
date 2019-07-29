@@ -7,8 +7,6 @@ object Spark2JsonReader {
 
   def main(args: Array[String]): Unit = {
 
-
-
     val spark = SparkSession
       .builder()
       .appName("Spark SQL basic example")
@@ -23,7 +21,7 @@ object Spark2JsonReader {
 
     df.createOrReplaceGlobalTempView("JSON_TABLE")
 
-    df.select("select * from JSON_TABLE").show()
+    df.select("select type from JSON_TABLE").show()
 
 
 

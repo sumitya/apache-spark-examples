@@ -1,29 +1,42 @@
 package poc
 
+import java.nio.file.Files
+import java.util.Properties
+
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.{SparkConf, SparkContext}
+import util.GetAllProperties
 
 object RDDPoc {
 
 
   def main(args: Array[String]): Unit = {
 
-    Logger.getLogger("org").setLevel(Level.OFF)
+    Logger.getLogger("org").setLevel(Level.DEBUG)
+
+   // get input file location var
+   var inputFile = GetAllProperties.readPropertyFile get "INPUT_FILE" getOrElse("#")
 
    //init spark conf and spark context
     val conf = new SparkConf(true).setMaster("local[1]").setAppName("RDDPoc")
 
     val sc = new SparkContext(conf)
 
+    conf.set("spark.eventLog.enabled","true")
+
     val data = 1 to 100
 
     //ways to create RDD
-
-    val fileRDD = sc.textFile("/home/hduser/IdeaProjects/spark2demo/src/resources/WA_Sales_Products_2012-14.csv")
+    val fileRDD = sc.textFile(inputFile)
 
     val listRDD = sc.parallelize(data)
 
     listRDD.foreach(println)
+
+    //flatMap operation
+
+    val sampleDataRDD = fileRDD.sample(false,.01)
+    sampleDataRDD.flatMap(input => input.split(",")).foreach(println)
 
     //csv file has header to skip header from the data.
     val header = fileRDD.first()
@@ -36,7 +49,7 @@ object RDDPoc {
     val mappedRDD = splittedRDD.map(f => (f(0),f(9).toInt))
 
     //filter transformation
-    val filterRDD = mappedRDD.filter(f => f._1.startsWith("China"))
+    val filterRDD = mappedRDD.filter(f => f._1.startsWith("China") || f._1.startsWith("United States") )
 
     //print the RDD lineage graph
     println(filterRDD.toDebugString)
@@ -53,5 +66,13 @@ object RDDPoc {
 
     mappedRDD.countByKey().foreach(println)
 
+   //getNumberofPartitions
+
+    println(mappedRDD.getNumPartitions)
+
+    println(mappedRDD.coalesce(2).getNumPartitions)
+
+   sc.stop()
   }
+
 }
