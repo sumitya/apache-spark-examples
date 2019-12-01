@@ -1,0 +1,10 @@
+target/
+.idea/
+spark-warehouse/
+metastore_db/
+src/main/resources/
+src/main/java/
+src/test/java/
+src/main/scala/poc/MultiDelimiterCsv.scala
+src/main/scala/jdbc
+src/main/resources/app.properties

@@ -17,6 +17,7 @@ object RDDPoc {
    // get input file location var
    var inputFile = GetAllProperties.readPropertyFile get "INPUT_FILE" getOrElse("#")
 
+
    //init spark conf and spark context
     val conf = new SparkConf(true).setMaster("local[1]").setAppName("RDDPoc")
 
@@ -30,6 +31,10 @@ object RDDPoc {
     val fileRDD = sc.textFile(inputFile)
 
     val listRDD = sc.parallelize(data)
+
+   println("PATH : "+listRDD.getCheckpointFile)
+
+
 
     listRDD.foreach(println)
 

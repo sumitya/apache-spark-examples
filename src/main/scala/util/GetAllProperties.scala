@@ -11,7 +11,9 @@ object GetAllProperties {
 
       def readPropertyFile(): Map[String, String] = {
 
-        prop.load(new FileInputStream("C://Users//<USER_NAME>//intelliJProjects//apache-spark-examples1//apache-spark-examples//src//main//resources//app.properties"))
+        val userName = System.getProperty("user.name")
+
+        prop.load(new FileInputStream(s"C://Users//${userName}//intelliJProjects//apache-spark-examples1//apache-spark-examples//src//main//resources//app.properties"))
 
         prop.entrySet().asScala.foreach {
           (entry) => {
