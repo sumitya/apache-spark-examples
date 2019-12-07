@@ -1,6 +1,8 @@
 package poc
 
 import org.apache.log4j.{Level, Logger}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd.RDD.rddToPairRDDFunctions
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.{SparkConf, SparkContext}
 import util.GetAllProperties
@@ -29,6 +31,14 @@ object RDDPoc {
 
     val data = 1 to 100
 
+    val fisrtPairData = List((10, 20), (30, 40), (30, 60))
+
+    val secondPairData = List((5,10),(15,20),(15,30))
+
+    val nameValue = Seq(("Panda",1),("Panda",2),("Kang",2),("Fu",3),("Kang Fu Panda",4))
+
+    val stringOfWords = Seq("This is is a kang kang fu fu fu panda panda")
+
     //ways to create RDD
     val fileRDD = sc.textFile(inputFile)
 
@@ -39,7 +49,109 @@ object RDDPoc {
 
     val listRDD = sc.parallelize(data)
 
-    aggregateRDDOperation
+    val pairRDD1 = sc.parallelize(fisrtPairData)
+
+    val pairRDD2 = sc.parallelize(secondPairData)
+
+    val nameValueRDD = sc.parallelize(nameValue)
+
+    val stringofWordsRDD = sc.parallelize(stringOfWords)
+
+    checkType(pairRDD1)
+    checkType(fisrtPairData)
+    println(pairRDD1.getClass.getName)
+
+    import scala.reflect.runtime.universe._
+
+    def checkType[T](rdd:T)(implicit type1:TypeTag[T]): Unit ={
+      println(type1.tpe.typeArgs)
+    }
+
+
+    //keyPairRDDOperation
+
+    //twoKeyPairRDDOperation
+
+    //aggregateRDDOperation
+
+    wordCount
+
+
+    def wordCount = {
+
+      stringofWordsRDD.flatMap( str => str.split(" ")).map(x => (x,1)).countByValue().foreach(println)
+
+      stringofWordsRDD.flatMap( str => str.split(" ")).map(x => (x,1)).reduceByKey((v1,v2) =>v1 + v2).foreach(println)
+
+      stringOfWords.flatMap(str => str.split(" "))
+
+      fileRDD.flatMap(str => str.split(" ")).countByValue().foreach(println)
+
+    }
+
+    def keyPairRDDOperation = {
+
+
+
+      val reduceByKey = pairRDD1.reduceByKey((x,y) => x + y)
+
+      reduceByKey.foreach(println)
+      println("===========================")
+
+      val groupbykey = pairRDD1.groupByKey()
+
+      groupbykey.foreach(println)
+      println("===========================")
+
+      //Apply a function to each value of a pair RDD without changing the key
+      pairRDD1.mapValues(x => x *2).foreach(println)
+      println("===========================")
+
+      // Pass each value in the key-value pair RDD through a flatMap function without changing the
+      // keys; this also retains the original RDD's partitioning.
+      pairRDD1.flatMapValues(x => (x to 100)).foreach(println)
+      println("===========================")
+
+      pairRDD1.keys.foreach(println)
+      println("===========================")
+      pairRDD1.values.foreach(println)
+      println("===========================")
+      pairRDD1.sortByKey().foreach(println)
+      println("===========================")
+
+
+      // nameValueRDD: Seq(("Panda",1),("Panda",2),("Kang",2),("Fu",3),("Kang Fu Panda",4))
+      // mapValues: ("Panda",(1,1)),,("Panda",(2,1)),("Kang",(2,1)),("Fu",(3,1)),("Kang Fu Panda",(4,1))
+      // reduceBykey: (Kang,(2,1)) (Kang Fu Panda,(4,1)) (Panda,(3,2)) (Fu,(3,1))
+
+      val nameValueReduceBykey = nameValueRDD.mapValues( x => (x,1)).reduceByKey((x,y) => (x._1 + y._1, x._1+y._2))
+
+      nameValueReduceBykey.foreach(println)
+
+    }
+
+    def twoKeyPairRDDOperation = {
+
+      val fisrtPairData = List((10, 20), (30, 40), (30, 60))
+
+      val secondPairData = List((5,10),(15,20),(15,30))
+
+      // Remove elements with a key present in the other RDD.
+      pairRDD1.subtractByKey(pairRDD2).foreach(println)
+      println("===========================")
+
+      pairRDD1.join(pairRDD2).foreach(println)
+      println("===========================")
+
+      pairRDD1.leftOuterJoin(pairRDD2).foreach(println)
+      println("===========================")
+
+      pairRDD1.rightOuterJoin(pairRDD2).foreach(println)
+      println("===========================")
+
+      pairRDD1.cogroup(pairRDD2).foreach(println)
+
+    }
 
     def aggregateRDDOperation = {
 
