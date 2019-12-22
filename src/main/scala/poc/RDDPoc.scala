@@ -67,7 +67,7 @@ object RDDPoc {
     }
 
 
-    keyPairRDDOperation
+    //keyPairRDDOperation
 
     //twoKeyPairRDDOperation
 
@@ -94,6 +94,8 @@ object RDDPoc {
       val joined = pairUserInfoRDD.join(pairuserLinksRDD)
       println(joined.partitioner)
 
+      joined.take(10).foreach(println)
+
       val sameDomainKeyWord = joined.filter{
         case(userid,joineddata) => joineddata._2.contains("Scala.abc.com")
       }
@@ -102,11 +104,6 @@ object RDDPoc {
 
 
       println("This user visited to the same domain Name: "+sameDomainKeyWord)
-
-
-
-
-
 
     }
 
