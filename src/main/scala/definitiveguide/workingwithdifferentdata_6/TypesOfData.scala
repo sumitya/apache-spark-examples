@@ -148,7 +148,9 @@ object TypesOfData extends App {
   // Map
   import org.apache.spark.sql.functions.map
 
-  df.select(map(col("ID"), col("NAME")).alias("complex_map")).show(2)
+  val header = df.first()
+  val withoutheader = df.filter(row => row!=header)
+  withoutheader.select(map(col("ID"), col("NAME")).alias("complex_map")).show(2)
 
   // converting struct into json
 
@@ -156,5 +158,16 @@ object TypesOfData extends App {
 
   df.selectExpr("(ID, NAME) as myStruct")
     .select(to_json(col("myStruct"))).show()
+
+
+  // UDF
+  def power3(number:Double):Double = number * number * number
+  power3(2.0)
+
+  import org.apache.spark.sql.functions.udf
+  val power3udf = udf(power3(_:Double):Double)
+
+  // in Scala
+ df.select(power3udf(col("ID"))).show()
 
 }
