@@ -4,8 +4,9 @@ import org.apache.log4j.{Level, Logger}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.rdd.RDD.rddToPairRDDFunctions
 import org.apache.spark.sql.types.{DoubleType, StringType, StructField, StructType}
-import org.apache.spark.sql.{ Row, SQLContext, SparkSession}
+import org.apache.spark.sql.{Row, SQLContext, SparkSession}
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
+import custom.UsersPartitioner
 import util.GetAllProperties
 
 case class Sales(Retailer_country: String, Order_method: String, `type`: String, Retailer_type: String, Product_line: String, Product_type: String, Product: String, Year: Int, Quarter: String, Revenue: Double, Quantity: Double, Gross_margin: Double)
@@ -75,10 +76,55 @@ object RDDPoc {
 
     //wordCount
 
-    joinInRDD
+    //joinCoGroupRDD
+
+    //zipRDDs
+
+    userPartitioning
+
+    def registerToKyro = {
+
+      // You can register your class with Kyro Serializer like below::
+
+      case class Test1(a:Int)
+      case class Test2(b:Int)
+      conf.registerKryoClasses(Array(classOf[Test1], classOf[Test2]))
+      val sc = new SparkContext(conf)
+    }
 
 
-    def joinInRDD = {
+    def userPartitioning = {
+
+      // NOTE::
+      // Coalesce -> coalesce effectively collapses partitions on the same worker in order to avoid a shuffle of the data when repartitioning
+      // Repartition -> The repartition operation allows you to repartition your data up or down but performs a shuffle across nodes in the process
+
+      val userInfoRDD = sc.textFile(userInfoFile)
+
+      println(userInfoRDD.map(line => (line.split(",")(0), line)).partitionBy(new UsersPartitioner).getNumPartitions)
+      println(userInfoRDD.map(line => (line.split(",")(0), line)).getNumPartitions)
+
+
+    }
+
+    def zipRDDs = {
+
+      // zip allows you to “zip” together two RDDs, assuming that they have the same length.
+      // This creates a PairRDD. The two RDDs must have the same number of partitions as well
+      // as the same number of elements.
+
+      val myCollection = "Spark The Definitive Guide : Big Data Processing Made Simple"
+        .split(" ")
+      val words = sc.parallelize(myCollection, 2)
+
+      val numrange = sc.parallelize(0 to 9, 2)
+
+      words.zip(numrange).collect().foreach(println)
+
+
+    }
+
+    def joinCoGroupRDD = {
 
       val userInfoRDD = sc.textFile(userInfoFile)
 
@@ -102,8 +148,12 @@ object RDDPoc {
 
       println(sameDomainKeyWord.partitioner)
 
-
       println("This user visited to the same domain Name: "+sameDomainKeyWord)
+
+      //CoGroups give you the ability to group together up to three key–value RDDs together in Scala and two in Python
+      val cogroupedRDD = pairUserInfoRDD.cogroup(pairuserLinksRDD,pairUserInfoRDD)
+
+      cogroupedRDD.take(10).foreach(println)
 
     }
 
@@ -211,7 +261,14 @@ object RDDPoc {
       // fold is same as reduce with the initial value i.e. zerovalue used for calculation.
       println(revenueRDD.fold(0)(_ + _))
 
-      val aggregateRevenue = tupleRDD.aggregate(0)(
+      // FOLDBYKEY -> foldByKey merges the values for each key using an associative function and
+      // a neutral “zero value,” which can be added to the result an arbitrary number of times, and must not change the result
+
+      def sumFunc = (v1: Int, v2: Int) => v1 + v2
+
+      filteredRDD.map(element => (element(8).toInt,element(9).toInt)).foldByKey(0)(sumFunc)
+
+      val aggregateRevenue = tupleRDD.aggregate(1)(
 
         /*
      |     * This is a seqOp for merging T into a U
@@ -238,15 +295,28 @@ object RDDPoc {
     |     * This is a combOp for mergining two U's
     |     * (ie 2 Int)
 
-        Partition1 + Partition2 + Partition3 + 3(Zero value)
+        Partition1 + Partition2 + Partition3 + 3(Zero value) -> combine operation happens at driver.
     |     */
 
         (acc1, acc2) => (acc1 + acc2)
       )
 
-
       println(aggregateRevenue)
 
+      def sumComputation = (v1: Int, v2: Int) => v1 * 10
+
+      tupleRDD.take(2).foreach(println)
+
+      revenueRDD.treeAggregate(1)(sumComputation,sumComputation,2)
+
+        //treeAggregate that does the same thing as aggregate (at the user level) but does so in a different way.
+        // It basically “pushes down” some of the subaggregations (creating a tree from executor to executor)
+        // before performing the final aggregation on the driver. Having multiple levels can help you to ensure that the driver does
+        // not run out of memory in the process of the aggregation.
+
+      def addComputation = (v1: Int, v2: Char) => v1 * 10
+
+      tupleRDD.aggregateByKey(0)(addComputation,sumComputation) // -> This function does the same as aggregate but instead of doing it partition by partition, it does it by key.
 
       val sqlContext = new SQLContext(sc)
       import sqlContext.implicits._

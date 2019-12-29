@@ -43,12 +43,6 @@ object DataFrameOperations extends App {
 
   df.show()
 
-  // spark catalog -> it maintains the catalog of current table and columns in a user application.
-  // catalyst optimizer does refer the catalog only to resolved the unresolved logical plan.
-
-  println(spark.catalog.currentDatabase)
-  println(spark.catalog.listTables())
-
   // Column and Expr(expressions) in dataframe.
 
   import org.apache.spark.sql.functions.{col}
@@ -186,4 +180,12 @@ object DataFrameOperations extends App {
   collectDF.show(4, false)
   collectDF.collect()
 
+  // spark catalog -> it maintains the catalog of current table and columns in a user application.
+  // catalyst optimizer does refer the catalog only to resolved the unresolved logical plan.
+
+  println(spark.catalog.currentDatabase)
+  println(spark.catalog.listTables().show())
+
+  spark.sqlContext.sql("show functions")
+  spark.sqlContext.sql("show system FUNCTIONS")
 }

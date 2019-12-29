@@ -167,6 +167,10 @@ object TypesOfData extends App {
   import org.apache.spark.sql.functions.udf
   val power3udf = udf(power3(_:Double):Double)
 
+  spark.udf.register("power3", power3(_:Double):Double)
+
+
+
   // in Scala
  df.select(power3udf(col("ID"))).show()
 
